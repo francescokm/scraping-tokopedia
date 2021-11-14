@@ -13,6 +13,9 @@ list_desc = []
 list_rating = []
 list_image = []
 list_store = []
+list_source_html = []
+maximum_prduct_numbers = 2 #Change this to 100 if you want to get 100 product list 
+
 
 def toCSV():
   
@@ -43,9 +46,13 @@ def toCSV():
         print("I/O error")
   
 def callLink(link):
+    
+    link_slice = link.split('%2F')
+    link_slicex = link_slice[4].split('%3F')
+    link = link_slice[2]+'/'+link_slice[3]+'/'+link_slicex[0]
     driver = webdriver.Firefox()
     wait = WebDriverWait(driver, 3)
-    driver.get(link)
+    driver.get('https://'+link)
     time.sleep(3)
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
@@ -74,46 +81,65 @@ def callLink(link):
     list_store.append(toko)	
     
 
-
-with webdriver.Firefox() as driver:
-
-    wait = WebDriverWait(driver, 10)
-    options = Options()
-    options.add_argument('--headless')
-    driver = webdriver.Firefox(options=options)
-    driver.get("https://www.tokopedia.com/discovery/kejar-diskon")
-    time.sleep(5)
-    total_height = int(driver.execute_script("return document.body.scrollHeight"))
+def get_source_code() :
     
-    print ("Start Get all list from Tokopedia")
-    print ("Please wait..")
-    for i in range(1, 50, 5):
-        try:
-            driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-            time.sleep(3)
-        except:
-            print("Problem")
-
-    html = driver.page_source
-    driver.close()
-
-    soup = BeautifulSoup(html, "html.parser")
-    intersection_div = soup.find_all("div", {"class": "intersection-visible-wrapper"})
-    div_a_ = soup.find_all("div", {"class": "css-1ehqh5q"})   
-
-    ii = 0
-    for div in div_a_ :
-        aTags = div.find_all("a", href=True)
-        for tag in aTags:
-            if ii == 2 :
-                break
-            print ("Get {} product...".format(ii))
-            callLink(str(tag['href']))
-            ii += 1
-           
-        if ii == 2:
-            break
+    with webdriver.Firefox() as driver:
+        wait = WebDriverWait(driver, 10)
         
-    print ("Export to CSV")
-    toCSV()
-    print ("DONE")
+        driver = webdriver.Firefox()
+        
+        for iii in range(1) :
+            if (iii == 0):
+                print ("Start Get first page list from Tokopedia")
+                driver.get("https://www.tokopedia.com/p/handphone-tablet/handphone?page=1&rt=4,5")
+                time.sleep(3)
+                total_height = int(driver.execute_script("return document.body.scrollHeight"))
+                list_source_html.append(driver.page_source)                
+                driver.close()
+                soup = BeautifulSoup(list_source_html[iii], "html.parser")
+                
+                div_a_ = soup.find_all("div", {"data-testid": "lstCL2ProductList"})   
+
+                ii = 0
+                for div in div_a_ :
+                    aTags = div.find_all("a", href=True)
+                    for tag in aTags:
+                        if ii == maximum_prduct_numbers :
+                            break
+                        print ("Get {} product...".format(1+ii))
+                        callLink(str(tag['href']))
+                        ii += 1
+                    
+                    if ii == maximum_prduct_numbers:
+                        break
+
+            elif (iii == 1):
+                print ("Start Get second page list from Tokopedia")
+                driver.get("https://www.tokopedia.com/p/handphone-tablet/handphone?page=2&rt=4,5")
+                time.sleep(3)
+                total_height = int(driver.execute_script("return document.body.scrollHeight"))
+                list_source_html.append(driver.page_source)                
+                driver.close()
+                soup = BeautifulSoup(list_source_html[iii], "html.parser")
+                
+                div_a_ = soup.find_all("div", {"data-testid": "lstCL2ProductList"})   
+
+                ii = 0
+                for div in div_a_ :
+                    aTags = div.find_all("a", href=True)
+                    for tag in aTags:
+                        if ii == maximum_prduct_numbers :
+                            break
+                        print ("Get {} product...".format(1+ii))
+                        callLink(str(tag['href']))
+                        ii += 1
+                    
+                    if ii == maximum_prduct_numbers:
+                        break
+
+
+
+get_source_code()        
+print ("Export to CSV")
+toCSV()
+print ("DONE")
